@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
 from modules.analysis import analysis_router
+from modules.crawler_api import crawler_router
 from modules.market import market_router
 from modules.prediction import prediction_router
-from modules.crawler_api import crawler_router
 
 # 创建主路由器
 api_router = APIRouter()

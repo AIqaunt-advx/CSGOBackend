@@ -4,10 +4,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from config import settings
-from router import api_router
-from modules.database import db_manager
 from modules.crawler import crawler_manager
+from modules.database import db_manager
+from router import api_router
 
 # 配置日志
 logging.basicConfig(
@@ -103,6 +104,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host=settings.HOST,

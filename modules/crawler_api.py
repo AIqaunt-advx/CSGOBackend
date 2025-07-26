@@ -1,14 +1,12 @@
-
 """
 爬虫管理API路由
 提供爬虫控制和状态监控接口
 """
 
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any
-import asyncio
-import logging
 
 from modules.crawler import crawler_manager
 from modules.database import db_manager

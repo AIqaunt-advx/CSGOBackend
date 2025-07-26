@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """简化的爬虫测试"""
 
-import asyncio
 import logging
-from datetime import datetime
-from pymongo import MongoClient
-import sys
 import os
+import sys
+from datetime import datetime
+
+from pymongo import MongoClient
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -16,14 +16,15 @@ from config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class SimpleCrawler:
     """简化的爬虫类"""
-    
+
     def __init__(self):
         self.client = None
         self.db = None
         self.records_collection = None
-    
+
     def connect_db(self):
         """连接数据库"""
         try:
@@ -35,13 +36,13 @@ class SimpleCrawler:
         except Exception as e:
             logger.error(f"数据库连接失败: {e}")
             return False
-    
+
     def close_db(self):
         """关闭数据库连接"""
         if self.client:
             self.client.close()
             logger.info("数据库连接已关闭")
-    
+
     def save_sample_data(self):
         """保存样本数据"""
         sample_data = [
@@ -68,11 +69,11 @@ class SimpleCrawler:
                 "transcationNum": 12,
                 "surviveNum": 6,
                 "file_id": "test_crawler",
-                "item_id": "test_item_2", 
+                "item_id": "test_item_2",
                 "item_name": "测试物品2"
             }
         ]
-        
+
         try:
             result = self.records_collection.insert_many(sample_data)
             logger.info(f"成功保存 {len(result.inserted_ids)} 条样本数据")
@@ -80,50 +81,51 @@ class SimpleCrawler:
         except Exception as e:
             logger.error(f"保存样本数据失败: {e}")
             return False
-    
+
     def test_crawler(self):
         """测试爬虫功能"""
         logger.info("开始测试爬虫功能")
-        
+
         # 连接数据库
         if not self.connect_db():
             return False
-        
+
         try:
             # 保存样本数据
             success = self.save_sample_data()
-            
+
             if success:
                 logger.info("✅ 爬虫测试成功")
-                
+
                 # 验证数据
                 count = self.records_collection.count_documents({"file_id": "test_crawler"})
                 logger.info(f"数据库中测试数据条数: {count}")
-                
+
                 return True
             else:
                 logger.error("❌ 爬虫测试失败")
                 return False
-                
+
         finally:
             self.close_db()
+
 
 def main():
     """主函数"""
     print("🧪 简化爬虫测试")
     print("=" * 30)
-    
+
     crawler = SimpleCrawler()
     success = crawler.test_crawler()
-    
+
     if success:
         print("🎉 测试通过！")
-        
+
         # 使用LLM工具验证数据
         print("\n📊 验证保存的数据:")
         from tools.llm_test_cli import QuickDataRetriever
         retriever = QuickDataRetriever()
-        
+
         try:
             data = retriever.get_data(method="latest", limit=3)
             if data:
@@ -134,6 +136,7 @@ def main():
             retriever.close()
     else:
         print("💥 测试失败！")
+
 
 if __name__ == "__main__":
     main()

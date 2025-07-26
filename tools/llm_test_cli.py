@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """LLM测试CLI工具 - 快速获取数据用于LLM请求测试"""
 
-import json
-import sys
 import argparse
-from datetime import datetime, timedelta
-from pymongo import MongoClient
+import json
 import logging
 import os
+import sys
+from datetime import datetime, timedelta
+
+from pymongo import MongoClient
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,6 +30,7 @@ MONGODB_CONFIG = {
     "collection": settings.MONGODB_COLLECTION_MARKET_DATA
 }
 
+
 class QuickDataRetriever:
     def __init__(self):
         """快速数据检索器"""
@@ -40,7 +42,7 @@ class QuickDataRetriever:
             print(f"❌ 数据库连接失败: {e}", file=sys.stderr)
             sys.exit(1)
 
-    def get_data(self, method: str = "latest", limit: int = 10, hours: int = 7, 
+    def get_data(self, method: str = "latest", limit: int = 10, hours: int = 7,
                  min_price: float = None, max_price: float = None) -> list:
         """统一的数据获取方法"""
         try:
@@ -63,12 +65,12 @@ class QuickDataRetriever:
                     {"$project": projection}
                 ]
                 return list(self.records_collection.aggregate(pipeline))
-                
+
             elif method == "latest":
                 # 最新数据
                 return list(self.records_collection.find({}, projection)
-                           .sort("timestamp", -1).limit(limit))
-                
+                            .sort("timestamp", -1).limit(limit))
+
             elif method == "hours":
                 # 最近N小时
                 now = datetime.now()
@@ -80,8 +82,8 @@ class QuickDataRetriever:
                     }
                 }
                 return list(self.records_collection.find(query, projection)
-                           .sort("timestamp", -1).limit(limit))
-                
+                            .sort("timestamp", -1).limit(limit))
+
             elif method == "price":
                 # 价格范围
                 query = {}
@@ -92,9 +94,9 @@ class QuickDataRetriever:
                     if max_price is not None:
                         price_query["$lte"] = max_price
                     query["price"] = price_query
-                
+
                 return list(self.records_collection.find(query, projection).limit(limit))
-                
+
         except Exception as e:
             print(f"❌ 获取数据失败: {e}", file=sys.stderr)
             return []
@@ -103,11 +105,12 @@ class QuickDataRetriever:
         """关闭连接"""
         self.client.close()
 
+
 def format_for_llm(data: list) -> dict:
     """格式化数据用于LLM请求"""
     if not data:
         return {"error": "没有找到数据", "data": []}
-    
+
     # 清理和格式化数据
     formatted_data = []
     for record in data:
@@ -123,11 +126,11 @@ def format_for_llm(data: list) -> dict:
             "surviveNum": record.get('surviveNum') or 0
         }
         formatted_data.append(formatted_record)
-    
+
     # 添加统计信息
     prices = [r['price'] for r in formatted_data]
     quantities = [r['onSaleQuantity'] for r in formatted_data]
-    
+
     return {
         "data": formatted_data,
         "count": len(formatted_data),
@@ -143,26 +146,27 @@ def format_for_llm(data: list) -> dict:
         }
     }
 
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='LLM测试数据获取工具')
-    parser.add_argument('--method', '-m', choices=['sample', 'latest', 'hours', 'price'], 
-                       default='latest', help='数据获取方法')
+    parser.add_argument('--method', '-m', choices=['sample', 'latest', 'hours', 'price'],
+                        default='latest', help='数据获取方法')
     parser.add_argument('--limit', '-l', type=int, default=10, help='获取数量限制')
     parser.add_argument('--hours', type=int, default=7, help='小时数 (用于hours方法)')
     parser.add_argument('--min-price', type=float, help='最小价格 (用于price方法)')
     parser.add_argument('--max-price', type=float, help='最大价格 (用于price方法)')
-    parser.add_argument('--format', '-f', choices=['json', 'pretty'], default='json', 
-                       help='输出格式')
+    parser.add_argument('--format', '-f', choices=['json', 'pretty'], default='json',
+                        help='输出格式')
     parser.add_argument('--quiet', '-q', action='store_true', help='静默模式，只输出数据')
-    
+
     args = parser.parse_args()
-    
+
     if not args.quiet:
         print(f"🚀 获取{args.method}数据 (限制: {args.limit})", file=sys.stderr)
-    
+
     retriever = QuickDataRetriever()
-    
+
     try:
         # 获取数据
         data = retriever.get_data(
@@ -172,7 +176,7 @@ def main():
             min_price=args.min_price,
             max_price=args.max_price
         )
-        
+
         # 格式化输出
         if args.format == 'json':
             result = format_for_llm(data)
@@ -190,7 +194,7 @@ def main():
                     print(f"{time_str:<20} {price:<8.2f} {qty:<8} {seek_price:<8.2f}")
             else:
                 print("❌ 没有找到数据")
-                
+
     except KeyboardInterrupt:
         if not args.quiet:
             print("\n👋 用户中断", file=sys.stderr)
@@ -199,6 +203,7 @@ def main():
         sys.exit(1)
     finally:
         retriever.close()
+
 
 if __name__ == "__main__":
     main()

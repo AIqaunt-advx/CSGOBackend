@@ -4,11 +4,13 @@ LLM服务模块
 """
 
 import asyncio
-import aiohttp
-import logging
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 import json
+import logging
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+import aiohttp
+
 from config import settings
 from modules.database import db_manager
 
@@ -61,7 +63,7 @@ class LLMService:
             }
 
             async with self.session.post(f"{self.base_url}/chat/completions",
-                                       json=payload) as response:
+                                         json=payload) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -311,7 +313,8 @@ class LLMService:
                     "data_points": len(item_data),
                     "price_range": {"min": min(prices), "max": max(prices)},
                     "latest_price": prices[-1],
-                    "price_change": ((prices[-1] - prices[0]) / prices[0] * 100) if len(prices) > 1 and prices[0] > 0 else 0
+                    "price_change": ((prices[-1] - prices[0]) / prices[0] * 100) if len(prices) > 1 and prices[
+                        0] > 0 else 0
                 }
 
         # 整体统计
@@ -326,8 +329,8 @@ class LLMService:
                 "avg_price": sum(all_prices) / len(all_prices) if all_prices else 0
             },
             "top_items": dict(sorted(item_stats.items(),
-                                   key=lambda x: x[1]["latest_price"],
-                                   reverse=True)[:10]),
+                                     key=lambda x: x[1]["latest_price"],
+                                     reverse=True)[:10]),
             "sources": list(set(item.get('source', 'unknown') for item in data))
         }
 

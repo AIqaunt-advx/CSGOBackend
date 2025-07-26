@@ -3,11 +3,13 @@ MongoDB数据库模块
 负责管理MongoDB连接和数据操作
 """
 
+import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-import logging
+
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import PyMongoError
+
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -158,7 +160,8 @@ class DatabaseManager:
                 "timestamp": {"$lt": cutoff_time}
             })
 
-            logger.info(f"Cleaned up {market_result.deleted_count} market records and {trend_result.deleted_count} trend records")
+            logger.info(
+                f"Cleaned up {market_result.deleted_count} market records and {trend_result.deleted_count} trend records")
 
         except PyMongoError as e:
             logger.error(f"Failed to cleanup old data: {e}")

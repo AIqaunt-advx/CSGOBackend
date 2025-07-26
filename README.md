@@ -14,6 +14,7 @@ CSGO市场数据分析后端系统，包含数据爬取、存储、分析和LLM�
 ## 🚀 快速开始
 
 ### 1. 安装依赖
+
 ```bash
 # 使用uv（推荐）
 uv sync
@@ -23,7 +24,9 @@ pip install -r requirements.txt
 ```
 
 ### 2. 配置环境
+
 复制 `.env.example` 到 `.env` 并配置MongoDB连接：
+
 ```env
 MONGODB_URL=mongodb://root:password@host:port
 MONGODB_DATABASE=market_data
@@ -31,6 +34,7 @@ MONGODB_COLLECTION_MARKET_DATA=price_history
 ```
 
 ### 3. 运行测试
+
 ```bash
 # 运行所有测试
 uv run cli.py test
@@ -42,6 +46,7 @@ uv run cli.py test crawler     # 爬虫测试
 ```
 
 ### 4. 启动服务
+
 ```bash
 # 启动完整服务（包含爬虫）
 uv run cli.py server --with-crawler
@@ -53,9 +58,11 @@ uv run cli.py crawler start
 ## 📋 CLI命令详解
 
 ### 测试命令
+
 ```bash
 uv run cli.py test [module]
 ```
+
 - `all` - 运行所有测试（默认）
 - `db` - 数据库连接测试
 - `tools` - LLM工具测试
@@ -63,15 +70,18 @@ uv run cli.py test [module]
 - `api` - API调用测试
 
 ### 爬虫管理
+
 ```bash
 uv run cli.py crawler [action]
 ```
+
 - `start` - 启动爬虫（后台线程运行）
 - `stop` - 停止爬虫
 - `status` - 查看爬虫状态
 - `restart` - 重启爬虫
 
 ### 数据工具
+
 ```bash
 # 获取数据
 uv run cli.py tools data [options]
@@ -85,6 +95,7 @@ uv run cli.py tools interactive
 ```
 
 ### 服务器
+
 ```bash
 uv run cli.py server [options]
   --with-crawler    # 同时启动爬虫
@@ -93,6 +104,7 @@ uv run cli.py server [options]
 ## 📊 数据格式
 
 系统存储的数据格式：
+
 ```json
 {
   "timestamp": 1640995200,
@@ -112,6 +124,7 @@ uv run cli.py server [options]
 ## 🛠️ 使用示例
 
 ### 开发调试流程
+
 ```bash
 # 1. 测试所有功能
 uv run cli.py test
@@ -130,12 +143,14 @@ uv run cli.py crawler stop
 ```
 
 ### 生产部署
+
 ```bash
 # 启动完整服务
 uv run cli.py server --with-crawler
 ```
 
 ### 数据分析
+
 ```bash
 # 获取最新数据
 uv run cli.py tools data --method latest --limit 20
@@ -174,12 +189,14 @@ uv run cli.py tools interactive
 ## 🧪 测试
 
 ### 测试模块
+
 - **数据库测试**: 验证MongoDB连接和数据操作
 - **工具测试**: 测试LLM数据获取和格式化工具
 - **爬虫测试**: 验证数据爬取和存储功能
 - **API测试**: 测试外部API调用
 
 ### 测试覆盖
+
 - ✅ 数据库连接和操作
 - ✅ 数据获取和格式化
 - ✅ 爬虫功能和错误处理
@@ -187,6 +204,7 @@ uv run cli.py tools interactive
 - ✅ 数据统计和分析
 
 ### 测试输出示例
+
 ```
 🚀 CSGO Backend 测试套件
 ==================================================
@@ -200,6 +218,7 @@ uv run cli.py tools interactive
 ## ⚙️ 配置说明
 
 ### 环境变量
+
 在 `.env` 文件中配置以下参数：
 
 ```env
@@ -241,12 +260,14 @@ LLM_MODEL=gpt-3.5-turbo
 ## 🔍 故障排除
 
 ### 常见问题
+
 - **数据库连接失败**: 检查MongoDB服务和连接字符串
 - **API调用失败**: 验证网络连接和API端点
 - **测试失败**: 确保在项目根目录运行
 - **爬虫异常**: 查看日志文件排查问题
 
 ### 调试命令
+
 ```bash
 # 测试数据库连接
 uv run cli.py test db
@@ -272,12 +293,14 @@ uv run cli.py tools data --limit 5 --format pretty
 欢迎提交Issue和Pull Request来改进这个项目！
 
 ### 开发流程
+
 1. Fork项目
 2. 创建功能分支
 3. 运行测试确保通过
 4. 提交Pull Request
 
 ### 代码规范
+
 - 使用Python类型提示
 - 遵循PEP 8代码风格
 - 添加适当的文档字符串

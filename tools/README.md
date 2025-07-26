@@ -5,9 +5,11 @@
 ## 文件说明
 
 ### 1. `llm_data_retriever.py`
+
 完整的交互式数据获取工具，提供友好的用户界面。
 
 **功能特性：**
+
 - 随机样本数据获取
 - 最新数据获取
 - 价格范围筛选
@@ -18,11 +20,13 @@
 - 数据保存功能
 
 **使用方法：**
+
 ```bash
 python tools/llm_data_retriever.py
 ```
 
 ### 2. `llm_test_cli.py`
+
 命令行工具，适合快速获取数据和脚本集成。
 
 **使用示例：**
@@ -48,6 +52,7 @@ python tools/llm_test_cli.py -q
 ```
 
 **命令行参数：**
+
 - `--method, -m`: 数据获取方法 (sample/latest/hours/price)
 - `--limit, -l`: 获取数量限制
 - `--hours`: 小时数（用于hours方法）
@@ -57,11 +62,13 @@ python tools/llm_test_cli.py -q
 - `--quiet, -q`: 静默模式
 
 ### 3. `llm_request_tool.py`
+
 LLM请求工具，用于直接向LLM服务发送请求。
 
 ## 数据格式
 
 ### 输入数据结构
+
 ```json
 {
   "timestamp": 1640995200,
@@ -76,6 +83,7 @@ LLM请求工具，用于直接向LLM服务发送请求。
 ```
 
 ### LLM请求格式输出
+
 ```json
 {
   "data": [
@@ -108,6 +116,7 @@ LLM请求工具，用于直接向LLM服务发送请求。
 ## 配置要求
 
 确保 `config.py` 中包含以下MongoDB配置：
+
 - `MONGODB_URL`: MongoDB连接URL
 - `MONGODB_DATABASE`: 数据库名称
 - `MONGODB_COLLECTION_MARKET_DATA`: 集合名称前缀
@@ -128,11 +137,13 @@ pip install pymongo python-dotenv pydantic-settings
 ## 快速开始
 
 ### 1. 测试工具是否正常工作
+
 ```bash
 python test_tools.py
 ```
 
 ### 2. 快速获取数据
+
 ```bash
 # 获取最新10条数据
 python tools/llm_test_cli.py
@@ -145,11 +156,13 @@ python tools/llm_test_cli.py -m hours --hours 24
 ```
 
 ### 3. 交互式数据浏览
+
 ```bash
 python tools/llm_data_retriever.py
 ```
 
 ### 4. LLM分析（需要配置LLM服务）
+
 ```bash
 python tools/llm_request_tool.py -a trend
 ```
