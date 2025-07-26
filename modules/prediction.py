@@ -79,7 +79,7 @@ class PricePredictor:
 
             # 计算MSE（这里使用模拟值）
             mse = price_volatility if len(prices) > 1 else 0.0
-            
+
             # 分析趋势
             if len(prices) >= 2:
                 recent_change = prices[-1] - prices[0]

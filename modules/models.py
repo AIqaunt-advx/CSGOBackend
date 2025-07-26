@@ -3,7 +3,8 @@
 包含项目中使用的所有Pydantic模型
 """
 
-from typing import List, Any
+from typing import List
+
 from pydantic import BaseModel, model_validator
 
 

@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """测试预测API"""
 
-import requests
 import json
-import sys
 import os
+import sys
+
+import requests
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import settings
 
+
 def test_predict_api():
     """测试预测API"""
     print("🚀 测试预测API...")
-    
+
     # 准备测试数据
     test_data = {
         "data": [
@@ -50,19 +52,19 @@ def test_predict_api():
             }
         ]
     }
-    
+
     try:
         print(f"📡 发送请求到: {settings.PREDICT_API_URL}")
-        
+
         response = requests.post(
             settings.PREDICT_API_URL,
             json=test_data,
             timeout=30,
             headers={"Content-Type": "application/json"}
         )
-        
+
         print(f"📊 响应状态码: {response.status_code}")
-        
+
         if response.status_code == 200:
             result = response.json()
             print("✅ 预测API响应成功")
@@ -71,7 +73,7 @@ def test_predict_api():
         else:
             print(f"❌ 预测API响应失败: {response.status_code}")
             print(f"错误信息: {response.text}")
-            
+
     except requests.exceptions.ConnectionError:
         print("❌ 无法连接到预测API服务")
         print("💡 请确保服务器正在运行: uv run main.py")
@@ -79,6 +81,7 @@ def test_predict_api():
         print("❌ 预测API请求超时")
     except Exception as e:
         print(f"❌ 测试失败: {e}")
+
 
 if __name__ == "__main__":
     test_predict_api()

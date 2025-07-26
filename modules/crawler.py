@@ -50,6 +50,7 @@ headers = {
     "Referer": "https://steamdt.com/"
 }
 
+
 # Pydantic模型定义
 
 
@@ -118,9 +119,6 @@ class MarketPageResponse(BaseModel):
     errorCodeStr: str | None
 
 
-
-
-
 class TypeTrendDetailsResponse(BaseModel):
     success: bool
     data: list[TrendDetailsDataItem]
@@ -133,11 +131,11 @@ class TypeTrendDetailsResponse(BaseModel):
 # API请求函数
 
 
-async def fetch_skin_market_data(next_id: str | None = None, retry_count = 0):
+async def fetch_skin_market_data(next_id: str | None = None, retry_count=0):
     """获取皮肤市场数据"""
-    
+
     url = "https://sdt-api.ok-skins.com/skin/market/v3/page"
-    
+
     body = {
         "dataField": "pvNums",
         "dataRange": "",
@@ -157,12 +155,11 @@ async def fetch_skin_market_data(next_id: str | None = None, retry_count = 0):
         return fetch_skin_market_data(next_id, retry_count + 1)
 
 
-
 async def fetch_item_details(item_id: str, platform: Literal["YOUPIN"]):
     """获取物品详情数据"""
-    
+
     url = "https://sdt-api.ok-skins.com/user/steam/type-trend/v2/item/details"
-    
+
     body = {
         "platform": platform,
         "typeDay": "5",
@@ -208,7 +205,7 @@ class CSGOCrawler:
     def _generate_mock_data() -> List[Dict[str, Any]]:
         """生成模拟数据"""
         import random
-        
+
         mock_details = []
         for i in range(random.randint(1, 5)):  # 随机生成1-5条数据
             detail = {
@@ -224,7 +221,7 @@ class CSGOCrawler:
                 "item_name": f"模拟物品_{i}"
             }
             mock_details.append(detail)
-        
+
         logger.info(f"生成了 {len(mock_details)} 条模拟数据")
         return mock_details
 

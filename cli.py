@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 """CSGO Backend 统一CLI工具"""
 
-from config import settings
-from modules.crawler import csgo_crawler
+import argparse
 import asyncio
+import logging
+import os
+import signal
+import subprocess
+import sys
 import threading
 import time
-import signal
-import sys
-import os
-import subprocess
-import argparse
-import logging
-from pathlib import Path
+
+from config import settings
+from modules.crawler import csgo_crawler
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 
 # 配置日志
 logging.basicConfig(
@@ -70,10 +69,10 @@ class CrawlerService:
 
         print(f"✅ 爬虫服务已启动，间隔 {settings.CRAWLER_INTERVAL} 秒")
         print("💡 爬虫将在后台持续运行，使用 'uv run cli.py crawler stop' 停止")
-        
+
         # 等待一段时间确保爬虫启动
         time.sleep(3)
-        
+
         return True
 
     def stop(self):
@@ -109,9 +108,9 @@ crawler_service = CrawlerService()
 
 def run_test_command(cmd, description, timeout=60):
     """运行测试命令"""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"🧪 {description}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
     try:
         result = subprocess.run(
@@ -183,7 +182,7 @@ def cmd_test(args):
             passed += 1
 
     # 显示结果
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"📊 测试结果: {passed}/{total} 通过")
 
     if passed == total:
@@ -212,7 +211,7 @@ def cmd_crawler(args):
         # 持续运行爬虫直到用户中断
         print("🚀 启动爬虫持续运行模式...")
         print("按 Ctrl+C 停止爬虫")
-        
+
         try:
             # 直接运行爬虫循环，不使用线程
             loop = asyncio.new_event_loop()
@@ -226,7 +225,7 @@ def cmd_crawler(args):
             return False
         finally:
             print("✅ 爬虫已停止")
-        
+
         return True
     else:
         print(f"❌ 未知的爬虫操作: {args.action}")
@@ -284,6 +283,7 @@ def cmd_server(args):
 
 def setup_signal_handlers():
     """设置信号处理器"""
+
     def signal_handler(signum, frame):
         print(f"\n收到信号 {signum}，正在停止服务...")
         crawler_service.stop()

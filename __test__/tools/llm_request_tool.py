@@ -1,5 +1,35 @@
 #!/usr/bin/env python3
-"""预测请求工具 - 获取数据并发送到预测API进行分析"""
+"""
+CSGO价格预测分析工具
+
+功能说明:
+    这个工具用于获取CSGO市场的历史价格数据，并将数据发送到预测API进行价格预测分析。
+    
+主要特性:
+    - 支持多种数据获取方式：最新数据、指定时间范围、价格范围筛选
+    - 自动格式化数据为预测API所需的格式
+    - 返回详细的预测结果和模型性能指标
+    - 支持JSON格式输出，便于后续处理
+
+数据格式:
+    输入数据包含以下字段：
+    - timestamp: 时间戳
+    - price: 当前价格
+    - onSaleQuantity: 在售数量
+    - seekPrice: 求购价格
+    - seekQuantity: 求购数量
+    - transactionAmount: 交易金额
+    - transcationNum: 交易次数
+    - surviveNum: 存活数量
+
+预测API接口:
+    POST /predict
+    请求体: {"data": [数据数组]}
+    响应: {"predictions": [预测值数组], "mse": 均方误差}
+
+使用方法:
+    python llm_request_tool.py --method hours --hours 7 --limit 50
+"""
 
 import argparse
 import json
@@ -10,11 +40,11 @@ from datetime import datetime
 import requests
 
 # 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 try:
     from config import settings
-    from tools.llm_test_cli import QuickDataRetriever, format_for_llm
+    from __test__.tools.llm_test_cli import QuickDataRetriever, format_for_llm
 except ImportError as e:
     print(f"❌ 导入模块失败: {e}", file=sys.stderr)
     print("请确保在项目根目录运行", file=sys.stderr)
@@ -100,31 +130,17 @@ class PredictRequestTool:
                 data["data"][:10], indent=2, ensure_ascii=False)  # 只显示前10条
         )
 
-    def send_request(self, prompt: str) -> dict:
-        """发送LLM请求"""
+    def send_request(self, data: list) -> dict:
+        """发送预测请求"""
         try:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            }
-
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "max_tokens": self.max_tokens,
-                "temperature": self.temperature
-            }
+            # 按照API要求的格式准备payload
+            payload = {"data": data}
 
             response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
+                self.predict_url,
                 json=payload,
-                timeout=self.timeout
+                timeout=self.timeout,
+                headers={"Content-Type": "application/json"}
             )
 
             response.raise_for_status()
@@ -140,11 +156,24 @@ class PredictRequestTool:
         if not data.get("data"):
             return {"error": "没有可分析的数据"}
 
-        # 创建提示词
-        prompt = self.create_analysis_prompt(data, analysis_type)
+        # 准备预测API所需的数据格式
+        prediction_data = []
 
-        # 发送请求
-        result = self.send_request(prompt)
+        for record in data.get("data", []):
+            prediction_record = {
+                "timestamp": record.get("timestamp", 0),
+                "price": float(record.get("price", 0)),
+                "onSaleQuantity": record.get("onSaleQuantity", 0),
+                "seekPrice": float(record.get("seekPrice", 0)),
+                "seekQuantity": record.get("seekQuantity", 0),
+                "transactionAmount": float(record.get("transactionAmount") or 0),
+                "transcationNum": record.get("transcationNum") or 0,
+                "surviveNum": record.get("surviveNum") or 0
+            }
+            prediction_data.append(prediction_record)
+
+        # 发送预测请求
+        result = self.send_request(prediction_data)
 
         return {
             "analysis_type": analysis_type,
@@ -153,21 +182,55 @@ class PredictRequestTool:
                 "time_range": data.get("time_range", {}),
                 "statistics": data.get("statistics", {})
             },
-            "llm_response": result,
+            "prediction_result": result,
             "timestamp": datetime.now().isoformat()
         }
 
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description='LLM数据分析工具')
+    parser = argparse.ArgumentParser(
+        description='CSGO价格预测分析工具 - 获取历史数据并发送到预测API进行分析',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""使用示例:
+  # 获取最近7小时的50条数据进行趋势分析
+  python llm_request_tool.py --method hours --hours 7 --limit 50 --analysis trend
+  
+  # 获取最新100条数据进行波动性分析
+  python llm_request_tool.py --method latest --limit 100 --analysis volatility
+  
+  # 获取特定价格范围的数据进行模式分析
+  python llm_request_tool.py --method price --min-price 50 --max-price 200 --analysis pattern
+
+输入参数说明:
+  --method: 数据获取方法
+    - sample: 获取样本数据
+    - latest: 获取最新数据
+    - hours: 获取指定小时数内的数据
+    - price: 获取指定价格范围内的数据
+  
+  --limit: 数据条数限制 (默认20条)
+  --hours: 小时数，仅在method=hours时使用 (默认7小时)
+  --min-price/--max-price: 价格范围，仅在method=price时使用
+  --analysis: 分析类型 (trend/volatility/pattern)
+
+输出结果说明:
+  返回JSON格式的预测结果，包含:
+  - analysis_type: 分析类型
+  - data_summary: 数据摘要 (数量、时间范围、统计信息)
+  - prediction_result: 预测结果
+    - predictions: 预测价格数组
+    - mse: 模型均方误差
+  - timestamp: 分析时间戳
+        """)
+
     parser.add_argument('--method', '-m', choices=['sample', 'latest', 'hours', 'price'],
                         default='latest', help='数据获取方法')
     parser.add_argument('--limit', '-l', type=int, default=20, help='获取数量限制')
     parser.add_argument('--hours', type=int, default=7, help='小时数 (用于hours方法)')
     parser.add_argument('--min-price', type=float, help='最小价格 (用于price方法)')
     parser.add_argument('--max-price', type=float, help='最大价格 (用于price方法)')
-    parser.add_argument('--analysis', '-a', choices=['trend', 'prediction', 'summary'],
+    parser.add_argument('--analysis', '-a', choices=['trend', 'volatility', 'pattern'],
                         default='trend', help='分析类型')
     parser.add_argument('--output', '-o', help='输出文件路径')
     parser.add_argument('--quiet', '-q', action='store_true', help='静默模式')
@@ -203,7 +266,7 @@ def main():
             print(f"🤖 发送到LLM进行{args.analysis}分析...", file=sys.stderr)
 
         # LLM分析
-        llm_tool = LLMRequestTool()
+        llm_tool = PredictRequestTool()
         result = llm_tool.analyze_data(formatted_data, args.analysis)
 
         # 输出结果

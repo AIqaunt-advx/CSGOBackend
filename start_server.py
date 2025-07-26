@@ -2,6 +2,7 @@
 """启动服务器的简单脚本"""
 
 import uvicorn
+
 from config import settings
 
 if __name__ == "__main__":
@@ -10,7 +11,7 @@ if __name__ == "__main__":
     print(f"📖 API文档: http://{settings.HOST}:{settings.PORT}/docs")
     print(f"🔮 预测端点: http://{settings.HOST}:{settings.PORT}/predict")
     print("按 Ctrl+C 停止服务器")
-    
+
     uvicorn.run(
         "main:app",
         host=settings.HOST,
