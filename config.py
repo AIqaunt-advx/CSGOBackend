@@ -1,6 +1,7 @@
-import os
 from typing import List
+
 from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     # 应用基本信息
@@ -41,6 +42,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
 
 # 创建全局设置实例
 settings = Settings()

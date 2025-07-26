@@ -12,12 +12,15 @@
 ## API接口
 
 ### GET /
+
 健康检查接口
 
 ### POST /api/max_diff
+
 获取饰品价格差异分析
 
 **响应格式：**
+
 ```json
 {
   "status": "success",
@@ -33,15 +36,29 @@
           "sell_num": 760,
           "buy_num": 42
         },
-        "steam": {...},
-        "yyyp": {...},
-        "r8": {...}
+        "steam": {
+          ...
+        },
+        "yyyp": {
+          ...
+        },
+        "r8": {
+          ...
+        }
       },
       "price_analysis": {
         "sell_price_diff": 221.0,
         "buy_price_diff": 47678.73,
-        "max_sell": {"platform": "yyyp", "price": 29221.0, "quantity": 811},
-        "min_sell": {"platform": "buff", "price": 29000.0, "quantity": 760},
+        "max_sell": {
+          "platform": "yyyp",
+          "price": 29221.0,
+          "quantity": 811
+        },
+        "min_sell": {
+          "platform": "buff",
+          "price": 29000.0,
+          "quantity": 760
+        },
         "arbitrage_opportunity": 0,
         "arbitrage_profit_rate": 0
       },
@@ -50,7 +67,9 @@
     }
   ],
   "summary": {
-    "top_arbitrage_opportunities": [...]
+    "top_arbitrage_opportunities": [
+      ...
+    ]
   }
 }
 ```
@@ -58,16 +77,19 @@
 ## 安装和运行
 
 1. 安装依赖：
+
 ```bash
 pip install -r requirements.txt
 ```
 
 2. 运行服务：
+
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 3. 访问API文档：
+
 ```
 http://localhost:8000/docs
 ```
@@ -75,11 +97,13 @@ http://localhost:8000/docs
 ## 测试
 
 ### 运行所有测试
+
 ```bash
 python -m pytest test_main.py -v
 ```
 
 ### 运行测试并生成覆盖率报告
+
 ```bash
 python run_tests.py --cov
 ```

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from typing import List, Optional
-import requests
 import asyncio
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException
+
 from config import settings
 
 market_router = APIRouter()
+
 
 class MarketDataService:
     """市场数据服务类"""
@@ -56,7 +58,9 @@ class MarketDataService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"获取悠悠有品数据失败: {str(e)}")
 
+
 market_service = MarketDataService()
+
 
 @market_router.get("/price/{item_name}")
 async def get_item_price(item_name: str, platforms: Optional[str] = "all"):
@@ -86,6 +90,7 @@ async def get_item_price(item_name: str, platforms: Optional[str] = "all"):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @market_router.get("/compare/{item_name}")
 async def compare_prices(item_name: str):
@@ -131,6 +136,7 @@ async def compare_prices(item_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @market_router.get("/trending")
 async def get_trending_items(limit: int = 10):
     """
@@ -139,19 +145,19 @@ async def get_trending_items(limit: int = 10):
     try:
         # 这里可以实现获取热门物品的逻辑
         trending_items = [
-            {
-                "name": "AK-47 | Redline (Field-Tested)",
-                "current_price": 125.0,
-                "change_24h": 5.2,
-                "volume_24h": 450
-            },
-            {
-                "name": "AWP | Dragon Lore (Factory New)",
-                "current_price": 8500.0,
-                "change_24h": -2.1,
-                "volume_24h": 12
-            }
-        ][:limit]
+                             {
+                                 "name": "AK-47 | Redline (Field-Tested)",
+                                 "current_price": 125.0,
+                                 "change_24h": 5.2,
+                                 "volume_24h": 450
+                             },
+                             {
+                                 "name": "AWP | Dragon Lore (Factory New)",
+                                 "current_price": 8500.0,
+                                 "change_24h": -2.1,
+                                 "volume_24h": 12
+                             }
+                         ][:limit]
 
         return {
             "status": "success",

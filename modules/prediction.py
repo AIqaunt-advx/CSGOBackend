@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
+from typing import List
+
+import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
-import numpy as np
-from datetime import datetime, timedelta
-from config import settings
 
 prediction_router = APIRouter()
+
 
 class TrendDetailsDataItem(BaseModel):
     """趋势数据项模型"""
@@ -18,15 +19,18 @@ class TrendDetailsDataItem(BaseModel):
     transcationNum: int
     surviveNum: int
 
+
 class PredictionRequest(BaseModel):
     """预测请求模型"""
     data: List[TrendDetailsDataItem]
+
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
     predictions: List[float]
     mse: float
     confidence: float
+
 
 class PricePredictor:
     """价格预测服务类"""
@@ -58,7 +62,7 @@ class PricePredictor:
         # 计算价格变化趋势
         price_changes = []
         for i in range(1, len(prices)):
-            price_changes.append(prices[i] - prices[i-1])
+            price_changes.append(prices[i] - prices[i - 1])
 
         # 计算平均变化率
         avg_change = sum(price_changes) / len(price_changes)
@@ -108,7 +112,9 @@ class PricePredictor:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"预测失败: {str(e)}")
 
+
 predictor = PricePredictor()
+
 
 @prediction_router.post("/predict")
 async def predict_item_price(request: PredictionRequest):
@@ -134,6 +140,7 @@ async def predict_item_price(request: PredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @prediction_router.get("/trend/{item_name}")
 async def get_price_trend(item_name: str, days: int = 30):
     """
@@ -148,7 +155,7 @@ async def get_price_trend(item_name: str, days: int = 30):
         trend_data = []
 
         for i in range(days):
-            date = datetime.now() - timedelta(days=days-i)
+            date = datetime.now() - timedelta(days=days - i)
             # 添加一些随机波动
             price_variation = np.random.normal(0, 5)
             price = max(base_price + price_variation + (i * 0.5), 1.0)
@@ -181,6 +188,7 @@ async def get_price_trend(item_name: str, days: int = 30):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @prediction_router.get("/forecast/{item_name}")
 async def forecast_price(item_name: str, horizon: int = 7):
     """
@@ -200,7 +208,7 @@ async def forecast_price(item_name: str, horizon: int = 7):
         # 生成预测日期
         forecast_dates = []
         for i in range(horizon):
-            future_date = datetime.now() + timedelta(days=i+1)
+            future_date = datetime.now() + timedelta(days=i + 1)
             forecast_dates.append(future_date.strftime("%Y-%m-%d"))
 
         forecast_data = [

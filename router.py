@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+
+from modules.analysis import analysis_router
 from modules.market import market_router
 from modules.prediction import prediction_router
-from modules.analysis import analysis_router
 
 # 创建主路由器
 api_router = APIRouter()

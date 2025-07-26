@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Optional
+from datetime import datetime
+from typing import List, Dict
+
 import numpy as np
-from datetime import datetime, timedelta
-from config import settings
+from fastapi import APIRouter, HTTPException
 
 analysis_router = APIRouter()
+
 
 class DataAnalyzer:
     """数据分析服务类"""
@@ -52,7 +53,9 @@ class DataAnalyzer:
 
         return anomalies
 
+
 analyzer = DataAnalyzer()
+
 
 @analysis_router.get("/statistics/{item_name}")
 async def get_item_statistics(item_name: str, days: int = 30):
@@ -99,6 +102,7 @@ async def get_item_statistics(item_name: str, days: int = 30):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @analysis_router.get("/market-overview")
 async def get_market_overview():
     """
@@ -129,6 +133,7 @@ async def get_market_overview():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @analysis_router.get("/price-distribution/{category}")
 async def get_price_distribution(category: str, min_price: float = 0, max_price: float = 10000):
@@ -170,6 +175,7 @@ async def get_price_distribution(category: str, min_price: float = 0, max_price:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @analysis_router.get("/volatility/{item_name}")
 async def analyze_volatility(item_name: str, period: int = 30):
     """
@@ -189,7 +195,7 @@ async def analyze_volatility(item_name: str, period: int = 30):
                 price = base_price
             else:
                 daily_return = np.random.normal(0, 0.02)  # 2% 日波动率
-                price = prices[i-1] * (1 + daily_return)
+                price = prices[i - 1] * (1 + daily_return)
                 returns.append(daily_return)
 
             prices.append(max(price, 1.0))
@@ -225,6 +231,7 @@ async def analyze_volatility(item_name: str, period: int = 30):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @analysis_router.get("/arbitrage-opportunities")
 async def find_arbitrage_opportunities(min_profit_margin: float = 5.0):

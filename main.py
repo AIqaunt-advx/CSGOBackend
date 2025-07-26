@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from config import settings
 from router import api_router
 
@@ -21,12 +22,15 @@ app.add_middleware(
 # 包含所有API路由
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
+
 @app.get("/")
 async def root():
     return {"status": "ok", "message": f"Welcome to the {settings.APP_NAME}!"}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host=settings.HOST,
