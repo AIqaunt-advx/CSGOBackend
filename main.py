@@ -1,170 +1,147 @@
-#!/usr/bin/env python3
-"""
-CS2 Skin Trading Volume Predictor
-Main script to train and use the AI model for predicting skin trading success volumes
-"""
-
-import pandas as pd
-import numpy as np
-from data_processor import SkinDataProcessor
-from model_trainer import SkinVolumePredictor
+from fastapi import FastAPI
 import requests
-import json
 
-def create_sample_data():
-    """Create sample data for demonstration (replace with your actual data loading)"""
-    np.random.seed(42)
-    n_samples = 2000
-    
-    # Generate synthetic data that mimics real trading patterns
-    data = []
-    for i in range(n_samples):
-        current_vol = np.random.exponential(50) + 10
-        wanted_vol = current_vol * np.random.uniform(0.3, 1.5)
-        
-        # Success volume depends on supply/demand dynamics with some noise
-        demand_ratio = wanted_vol / current_vol
-        base_success = wanted_vol * min(1.0, current_vol / wanted_vol) * 0.8
-        noise = np.random.normal(0, base_success * 0.1)
-        success_vol = max(0, base_success + noise)
-        
-        data.append({
-            'current_sales_volume': current_vol,
-            'wanted_sales_volume': wanted_vol,
-            'success_sales_volume': success_vol
-        })
-    
-    return pd.DataFrame(data)
 
-def train_model(data_file=None):
-    """Train the skin volume prediction model"""
-    print("=== CS2 Skin Trading Volume Predictor ===")
-    
-    # Initialize processors
-    processor = SkinDataProcessor()
-    predictor = SkinVolumePredictor()
-    
-    # Load data
-    if data_file:
-        if data_file.endswith('.json'):
-            df = processor.load_single_json(data_file)
-        else:
-            # Try to load multiple JSON files
-            df = processor.load_multiple_json_files(data_file)
-    else:
-        print("Using sample data for demonstration...")
-        df = create_sample_data()
-    
-    if df is None:
-        print("Failed to load data")
-        return None, None
-    
-    # Explore data
-    processor.explore_data(df)
-    
-    # Prepare data for training (use transactionAmount as target)
+app = FastAPI()
+
+@app.get("/")
+def main():
+    return {"status": "ok", "message": "Welcome to the DaoGO Backend!"}
+
+
+@app.post("/api/max_diff") # 不同平台的差价
+async def max_diff():
+    """
+    直接去拿上游域名的饰品信息
+    然后去做对比
+    你说这不导购吗？
+    """
     try:
-        X_train, X_test, y_train, y_test, feature_names = processor.prepare_data(df, target_col='transactionAmount')
-    except ValueError as e:
-        print(f"Error: {e}")
-        print("Trying with transcationNum as target...")
-        try:
-            X_train, X_test, y_train, y_test, feature_names = processor.prepare_data(df, target_col='transcationNum')
-        except ValueError:
-            print("No valid transaction data found. Using synthetic target...")
-            # Create synthetic success volume based on demand ratio
-            df['synthetic_success'] = df['seekQuantity'] * np.minimum(1.0, df['onSaleQuantity'] / (df['seekQuantity'] + 1)) * 0.8
-            X_train, X_test, y_train, y_test, feature_names = processor.prepare_data(df, target_col='synthetic_success')
-    
-    # Train and compare models
-    results, models = predictor.train_and_compare_models(
-        X_train, X_test, y_train, y_test, feature_names
-    )
-    
-    # Visualize results
-    predictor.plot_predictions(X_test, y_test)
-    feature_importance = predictor.get_feature_importance()
-    
-    if feature_importance is not None:
-        print("\nFeature Importance:")
-        print(feature_importance)
-    
-    # Save the best model
-    predictor.save_model()
-    
-    return predictor, processor
-
-def predict_from_api(api_url=None, current_volume=None, wanted_volume=None):
-    """Make prediction using market API data or manual input"""
-    # Load trained model
-    predictor = SkinVolumePredictor()
-    predictor.load_model()
-    
-    if api_url:
-        try:
-            # Fetch data from API
-            response = requests.get(api_url)
-            data = response.json()
-            current_volume = data.get('current_sales_volume')
-            wanted_volume = data.get('wanted_sales_volume')
-        except Exception as e:
-            print(f"Error fetching API data: {e}")
-            return None
-    
-    if current_volume is None or wanted_volume is None:
-        print("Please provide current_volume and wanted_volume")
-        return None
-    
-    # Make prediction
-    predicted_success = predictor.predict(current_volume, wanted_volume)
-    
-    print(f"\n=== Prediction Results ===")
-    print(f"Current Sales Volume: {current_volume:.2f}")
-    print(f"Wanted Sales Volume: {wanted_volume:.2f}")
-    print(f"Predicted Success Volume: {predicted_success:.2f}")
-    
-    # Calculate trading insights
-    success_rate = predicted_success / wanted_volume if wanted_volume > 0 else 0
-    demand_ratio = wanted_volume / current_volume if current_volume > 0 else 0
-    
-    print(f"\n=== Trading Insights ===")
-    print(f"Predicted Success Rate: {success_rate:.2%}")
-    print(f"Demand Ratio: {demand_ratio:.2f}")
-    
-    if success_rate > 0.8:
-        print("🟢 HIGH SUCCESS PROBABILITY - Good buying opportunity")
-    elif success_rate > 0.5:
-        print("🟡 MODERATE SUCCESS PROBABILITY - Consider market conditions")
-    else:
-        print("🔴 LOW SUCCESS PROBABILITY - High risk")
-    
-    return predicted_success
+        # 调用上游API获取全量饰品数据
+        api_url = "https://api.csqaq.com/api/v1/goods/get_all_goods_info"
+        headers = {
+            "ApiToken": "MFKMX1M7V5O3R5F2W5S5N6Y1"  # 需要替换为实际的API Token
+        }
+        
+        response = requests.post(api_url, headers=headers)
+        
+        if response.status_code != 200:
+            return {"error": "Failed to fetch data from upstream API", "status_code": response.status_code}
+        
+        data = response.json()
+        
+        if data.get("code") != 200:
+            return {"error": "Upstream API returned error", "message": data.get("msg", "Unknown error")}
+        
+        # 解析价格数据并计算差价
+        items = data.get("data", [])
+        price_analysis = []
+        
+        for item in items:
+            # 提取各平台价格信息
+            platforms = {
+                "buff": {
+                    "sell_price": item.get("buff_sell_price", 0),
+                    "buy_price": item.get("buff_buy_price", 0),
+                    "sell_num": item.get("buff_sell_num", 0),
+                    "buy_num": item.get("buff_buy_num", 0)
+                },
+                "steam": {
+                    "sell_price": item.get("steam_sell_price", 0),
+                    "buy_price": item.get("steam_buy_price", 0),
+                    "sell_num": item.get("steam_sell_num", 0),
+                    "buy_num": item.get("steam_buy_num", 0)
+                },
+                "yyyp": {
+                    "sell_price": item.get("yyyp_sell_price", 0),
+                    "buy_price": item.get("yyyp_buy_price", 0),
+                    "sell_num": item.get("yyyp_sell_num", 0),
+                    "buy_num": item.get("yyyp_buy_num", 0),
+                    "lease_price": item.get("yyyp_lease_price", 0),
+                    "long_lease_price": item.get("yyyp_long_lease_price", 0),
+                    "lease_num": item.get("yyyp_lease_num", 0)
+                },
+                "r8": {
+                    "sell_price": item.get("r8_sell_price", 0),
+                    "sell_num": item.get("r8_sell_num", 0)
+                }
+            }
+            
+            # 计算最大差价
+            sell_prices = []
+            buy_prices = []
+            
+            for platform, prices in platforms.items():
+                if prices.get("sell_price", 0) > 0:
+                    sell_prices.append({
+                        "platform": platform,
+                        "price": prices["sell_price"],
+                        "quantity": prices.get("sell_num", 0)
+                    })
+                if prices.get("buy_price", 0) > 0:
+                    buy_prices.append({
+                        "platform": platform,
+                        "price": prices["buy_price"],
+                        "quantity": prices.get("buy_num", 0)
+                    })
+            
+            # 找出最高和最低售价
+            max_sell = max(sell_prices, key=lambda x: x["price"]) if sell_prices else None
+            min_sell = min(sell_prices, key=lambda x: x["price"]) if sell_prices else None
+            
+            # 找出最高和最低求购价
+            max_buy = max(buy_prices, key=lambda x: x["price"]) if buy_prices else None
+            min_buy = min(buy_prices, key=lambda x: x["price"]) if buy_prices else None
+            
+            # 计算差价和利润率
+            sell_diff = (max_sell["price"] - min_sell["price"]) if max_sell and min_sell else 0
+            buy_diff = (max_buy["price"] - min_buy["price"]) if max_buy and min_buy else 0
+            
+            # 计算潜在套利机会（最高求购价 vs 最低售价）
+            arbitrage_opportunity = 0
+            arbitrage_profit_rate = 0
+            if max_buy and min_sell and max_buy["price"] > min_sell["price"]:
+                arbitrage_opportunity = max_buy["price"] - min_sell["price"]
+                arbitrage_profit_rate = (arbitrage_opportunity / min_sell["price"]) * 100
+            
+            analysis = {
+                "market_hash_name": item.get("market_hash_name", ""),
+                "name": item.get("name", ""),
+                "platforms": platforms,
+                "price_analysis": {
+                    "sell_price_diff": sell_diff,
+                    "buy_price_diff": buy_diff,
+                    "max_sell": max_sell,
+                    "min_sell": min_sell,
+                    "max_buy": max_buy,
+                    "min_buy": min_buy,
+                    "arbitrage_opportunity": arbitrage_opportunity,
+                    "arbitrage_profit_rate": round(arbitrage_profit_rate, 2)
+                },
+                "statistic": item.get("statistic", 0),
+                "updated_at": item.get("updated_at", "")
+            }
+            
+            price_analysis.append(analysis)
+        
+        # 按套利机会排序
+        price_analysis.sort(key=lambda x: x["price_analysis"]["arbitrage_opportunity"], reverse=True)
+        
+        return {
+            "status": "success",
+            "total_items": len(price_analysis),
+            "data": price_analysis,
+            "summary": {
+                "top_arbitrage_opportunities": price_analysis[:10] if price_analysis else []
+            }
+        }
+        
+    except requests.RequestException as e:
+        return {"error": "Network error", "details": str(e)}
+    except Exception as e:
+        return {"error": "Internal server error", "details": str(e)}
 
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        
-        if command == "train":
-            data_file = sys.argv[2] if len(sys.argv) > 2 else None
-            train_model(data_file)
-            
-        elif command == "predict":
-            if len(sys.argv) >= 4:
-                current_vol = float(sys.argv[2])
-                wanted_vol = float(sys.argv[3])
-                predict_from_api(current_volume=current_vol, wanted_volume=wanted_vol)
-            else:
-                print("Usage: python main.py predict <current_volume> <wanted_volume>")
-                
-        elif command == "api_predict":
-            api_url = sys.argv[2] if len(sys.argv) > 2 else None
-            predict_from_api(api_url=api_url)
-    else:
-        print("Usage:")
-        print("  python main.py train [data_file.csv]")
-        print("  python main.py predict <current_volume> <wanted_volume>")
-        print("  python main.py api_predict <api_url>")
-        print("\nRunning training with sample data...")
-        train_model()
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,8 +1,0 @@
-{
-  "project_name": "cs2-skin-prediction",
-  "python_version": "3.9",
-  "gpu_required": true,
-  "memory_gb": 16,
-  "storage_gb": 50,
-  "estimated_runtime_hours": 2
-}
