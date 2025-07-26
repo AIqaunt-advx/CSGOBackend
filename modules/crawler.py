@@ -10,8 +10,9 @@ import traceback
 from datetime import datetime
 from typing import Any, Literal, List, Dict
 
-import aiohttp
+import httpx
 import tenacity
+import tqdm
 from pydantic import BaseModel, model_validator
 from pymongo import MongoClient
 from tqdm import trange
@@ -28,6 +29,25 @@ myretry = tenacity.retry(
     retry_error_callback=lambda retry_state: None,
 )
 
+headers = {
+    "accept": "application/json",
+    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+    "access-token": "undefined",
+    "content-type": "application/json",
+    "language": "zh_CN",
+    "priority": "u=1, i",
+    "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"macOS\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "x-app-version": "1.0.0",
+    "x-currency": "CNY",
+    "x-device": "1",
+    "x-device-id": "b280cd11-f280-4b57-aaa7-8ba53c5ab99b",
+    "Referer": "https://steamdt.com/"
+}
 
 # Pydantic模型定义
 
@@ -51,7 +71,7 @@ class TrendItem(BaseModel):
     price: float
 
     @model_validator(mode="before")
-    def parse_trend_list(cls, v):
+    def parse_trend_list(self, v):
         if isinstance(v, list):
             assert len(v) == 2, "Invalid trend list"
             return {"timestamp": int(v[0]), "price": float(v[1])}
@@ -105,11 +125,11 @@ class TrendDetailsDataItem(BaseModel):
     seekPrice: float
     seekQuantity: int
     transactionAmount: float | None
-    transcationNum: int | None
+    transactionNum: int | None
     surviveNum: int | None
 
     @model_validator(mode="before")
-    def parse_trend_details_list(cls, v):
+    def parse_trend_details_list(self, v):
         if isinstance(v, list):
             assert len(v) == 8, "Invalid trend details list"
             return {
@@ -119,7 +139,7 @@ class TrendDetailsDataItem(BaseModel):
                 "seekPrice": float(v[3]),
                 "seekQuantity": int(v[4]),
                 "transactionAmount": float(v[5]) if v[5] is not None else None,
-                "transcationNum": int(v[6]) if v[6] is not None else None,
+                "transactionNum": int(v[6]) if v[6] is not None else None,
                 "surviveNum": int(v[7]) if v[7] is not None else None,
             }
         return v
@@ -137,10 +157,8 @@ class TypeTrendDetailsResponse(BaseModel):
 # API请求函数
 
 
-async def fetch_skin_market_data(next_id: str | None = None):
-    """获取皮肤市场数据 - 使用curl命令"""
-    import subprocess
-    import json as json_lib
+async def fetch_skin_market_data(next_id: str | None = None, retry_count = 0):
+    """获取皮肤市场数据"""
     
     url = "https://sdt-api.ok-skins.com/skin/market/v3/page"
     
@@ -153,81 +171,21 @@ async def fetch_skin_market_data(next_id: str | None = None):
         "pageSize": 8000,
         "timestamp": str(int(time.time() * 1000))
     }
-    headers = {
-        "accept": "application/json",
-        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "access-token": "undefined",
-        "content-type": "application/json",
-        "language": "zh_CN",
-        "priority": "u=1, i",
-        "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"macOS\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "x-app-version": "1.0.0",
-        "x-currency": "CNY",
-        "x-device": "1",
-        "x-device-id": "b280cd11-f280-4b57-aaa7-8ba53c5ab99b",
-        "Referer": "https://steamdt.com/"
-    }
-    # 构建curl命令
-    curl_cmd = [
-        "curl", "-X", "POST",
-        url,
-        "-H", "accept: application/json",
-        "-H", "accept-language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "-H", "access-token: undefined",
-        "-H", "content-type: application/json",
-        "-H", "language: zh_CN",
-        "-H", "priority: u=1, i",
-        "-H", "sec-ch-ua: \"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"",
-        "-H", "sec-ch-ua-mobile: ?0",
-        "-H", "sec-ch-ua-platform: \"macOS\"",
-        "-H", "sec-fetch-dest: empty",
-        "-H", "sec-fetch-mode: cors",
-        "-H", "sec-fetch-site: cross-site",
-        "-H", "x-app-version: 1.0.0",
-        "-H", "x-currency: CNY",
-        "-H", "x-device: 1",
-        "-H", "x-device-id: b280cd11-f280-4b57-aaa7-8ba53c5ab99b",
-        "-H", "Referer: https://steamdt.com/",
-        "-d", json_lib.dumps(body),
-        "--insecure",  # 忽略SSL证书问题
-        "--silent",    # 静默模式
-        "--show-error" # 显示错误
-    ]
-
     try:
-        # 异步执行curl命令
-        process = await asyncio.create_subprocess_exec(
-            *curl_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-
-        stdout, stderr = await process.communicate()
-
-        if process.returncode != 0:
-            logger.error(f"curl命令执行失败: {stderr.decode()}")
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers=headers, json=body)
+            return resp.json()
+    except httpx.ReadTimeout:
+        if retry_count >= 5:
             return None
+        return fetch_skin_market_data(next_id, retry_count + 1)
 
-        # 解析JSON响应
-        json_response = json_lib.loads(stdout.decode())
-        return MarketPageResponse.model_validate(json_response)
-        
-    except Exception as e:
-        logger.error(f"API调用失败: {e}")
-        return None
 
 
 async def fetch_item_details(item_id: str, platform: Literal["YOUPIN"]):
-    """获取物品详情数据 - 使用curl命令"""
-    import subprocess
-    import json as json_lib
+    """获取物品详情数据"""
     
-    url = "https://sdt-api.ok-skins.com/user/steam/type-trend/v2/item/details?timestamp=1753373125434"
+    url = "https://sdt-api.ok-skins.com/user/steam/type-trend/v2/item/details"
     
     body = {
         "platform": platform,
@@ -237,55 +195,9 @@ async def fetch_item_details(item_id: str, platform: Literal["YOUPIN"]):
         "itemId": item_id,
         "timestamp": str(int(time.time() * 1000))
     }
-    
-    # 构建curl命令
-    curl_cmd = [
-        "curl", "-X", "POST",
-        url,
-        "-H", "accept: application/json",
-        "-H", "accept-language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "-H", "access-token: ",
-        "-H", "content-type: application/json",
-        "-H", "language: zh_CN",
-        "-H", "priority: u=1, i",
-        "-H", "sec-ch-ua: \"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"",
-        "-H", "sec-ch-ua-mobile: ?0",
-        "-H", "sec-ch-ua-platform: \"macOS\"",
-        "-H", "sec-fetch-dest: empty",
-        "-H", "sec-fetch-mode: cors",
-        "-H", "sec-fetch-site: cross-site",
-        "-H", "x-app-version: 1.0.0",
-        "-H", "x-currency: CNY",
-        "-H", "x-device: 1",
-        "-H", "x-device-id: b280cd11-f280-4b57-aaa7-8ba53c5ab99b",
-        "-H", "Referer: https://steamdt.com/",
-        "-d", json_lib.dumps(body),
-        "--insecure",  # 忽略SSL证书问题
-        "--silent",    # 静默模式
-        "--show-error" # 显示错误
-    ]
-    
-    try:
-        # 异步执行curl命令
-        process = await asyncio.create_subprocess_exec(
-            *curl_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode != 0:
-            logger.error(f"获取物品详情curl失败 (ID: {item_id}): {stderr.decode()}")
-            return None
-        
-        # 解析JSON响应
-        json_response = json_lib.loads(stdout.decode())
-        return TypeTrendDetailsResponse.model_validate(json_response)
-        
-    except Exception as e:
-        logger.error(f"获取物品详情失败 (ID: {item_id}): {e}")
-        return None
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, headers=headers, json=body)
+        return resp.json()
 
 
 class CSGOCrawler:
@@ -315,8 +227,9 @@ class CSGOCrawler:
         if self.client:
             self.client.close()
             logger.info("数据库连接已关闭")
-    
-    def _generate_mock_data(self) -> List[Dict[str, Any]]:
+
+    @staticmethod
+    def _generate_mock_data() -> List[Dict[str, Any]]:
         """生成模拟数据"""
         import random
         
@@ -329,7 +242,7 @@ class CSGOCrawler:
                 "seekPrice": round(random.uniform(45.0, 190.0), 2),
                 "seekQuantity": random.randint(5, 50),
                 "transactionAmount": round(random.uniform(500.0, 2000.0), 2),
-                "transcationNum": random.randint(5, 30),
+                "transactionNum": random.randint(5, 30),
                 "surviveNum": random.randint(1, 15),
                 "item_id": f"mock_item_{int(time.time())}_{i}",
                 "item_name": f"模拟物品_{i}"
@@ -354,13 +267,13 @@ class CSGOCrawler:
                     logger.warning(f"第{page + 1}页API调用失败，跳过此页")
                     continue
 
-                data = skin_data.data
+                data = skin_data['data']
                 if data is None:
                     logger.warning(f"第{page + 1}页数据为空: {skin_data}")
                     break
 
-                full_list += data.list
-                next_id = data.nextId
+                full_list += data['list']
+                next_id = data['nextId']
 
                 if next_id is None:
                     logger.info(f"已爬取完所有页面，共{page + 1}页")
@@ -385,35 +298,28 @@ class CSGOCrawler:
             # 分组处理，每组20个物品
             grouped = [items[i:i + 20] for i in range(0, len(items), 20)]
 
-            for group_idx, group in enumerate(grouped):
+            for group_idx, group in tqdm.tqdm(enumerate(grouped)):
                 logger.info(f"处理第 {group_idx + 1}/{len(grouped)} 组物品")
-
-                # 并发请求这一组的物品详情
-                tasks = [
-                    asyncio.create_task(fetch_item_details(item.id, "YOUPIN"))
-                    for item in group
-                ]
-
-                results = await asyncio.gather(*tasks, return_exceptions=True)
+                results = []
+                for item in group:
+                    results.append(
+                        await fetch_item_details(item['id'], "YOUPIN")
+                    )
 
                 for item, result in zip(group, results):
-                    if isinstance(result, Exception):
-                        logger.error(f"获取物品 {item.name} 详情失败: {result}")
-                        continue
-
                     if result is None:
-                        logger.warning(f"物品 {item.name} 详情请求失败，跳过")
+                        logger.warning(f"物品 {item['name']} 详情请求失败，跳过")
                         continue
 
-                    if result.success and result.data:
+                    if result['success'] and result['data']:
                         # 为每条记录添加物品信息
-                        for detail in result.data:
+                        for detail in result['data']:
                             detail_dict = detail.model_dump()
-                            detail_dict['item_id'] = item.id
-                            detail_dict['item_name'] = item.name
+                            detail_dict['item_id'] = item['id']
+                            detail_dict['item_name'] = item['name']
                             all_details.append(detail_dict)
                     else:
-                        logger.warning(f"物品 {item.name} 详情数据为空或请求失败")
+                        logger.warning(f"物品 {item['name']} 详情数据为空或请求失败: {result['errorMsg']}")
 
                 # 组间延迟
                 if group_idx < len(grouped) - 1:
