@@ -5,8 +5,10 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.12.14",
+    "motor>=3.7.1",
     "pydantic-settings>=2.10.1",
     "pymongo>=4.13.2",
+    "requests>=2.32.4",
     "tenacity>=9.1.2",
     "tqdm>=4.67.1",
 ]

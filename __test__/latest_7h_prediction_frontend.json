@@ -1,0 +1,197 @@
+{
+  "success": true,
+  "timestamp": "2025-07-27T05:18:57.405652",
+  "total_items": 10,
+  "items": [
+    {
+      "id": "10",
+      "item_designation": "★ Gut Knife | Doppler",
+      "max_diff": "$129.51",
+      "expected_today_sales": 123,
+      "recommended_buy": 57,
+      "expected_income": "$7382",
+      "details": {
+        "current_price": 234.24301999999997,
+        "predicted_avg_price": 73.62363217163085,
+        "price_trend": -160.61938782836913,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "09",
+      "item_designation": "M4A1-S | Knight",
+      "max_diff": "$122.69",
+      "expected_today_sales": 123,
+      "recommended_buy": 59,
+      "expected_income": "$7239",
+      "details": {
+        "current_price": 221.91443999999998,
+        "predicted_avg_price": 69.74870416259765,
+        "price_trend": -152.16573583740234,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "08",
+      "item_designation": "★ Bayonet | Tiger Tooth",
+      "max_diff": "$115.88",
+      "expected_today_sales": 123,
+      "recommended_buy": 62,
+      "expected_income": "$7184",
+      "details": {
+        "current_price": 209.58586000000003,
+        "predicted_avg_price": 65.87377615356445,
+        "price_trend": -143.71208384643555,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "06",
+      "item_designation": "★ Karambit | Doppler",
+      "max_diff": "$102.25",
+      "expected_today_sales": 123,
+      "recommended_buy": 70,
+      "expected_income": "$7157",
+      "details": {
+        "current_price": 184.9287,
+        "predicted_avg_price": 58.12392013549804,
+        "price_trend": -126.80477986450194,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "07",
+      "item_designation": "Desert Eagle | Blaze",
+      "max_diff": "$109.06",
+      "expected_today_sales": 123,
+      "recommended_buy": 60,
+      "expected_income": "$6544",
+      "details": {
+        "current_price": 197.25728,
+        "predicted_avg_price": 61.99884814453125,
+        "price_trend": -135.25843185546873,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "05",
+      "item_designation": "Glock-18 | Fade",
+      "max_diff": "$95.43",
+      "expected_today_sales": 123,
+      "recommended_buy": 61,
+      "expected_income": "$5821",
+      "details": {
+        "current_price": 172.60011999999998,
+        "predicted_avg_price": 54.248992126464834,
+        "price_trend": -118.35112787353513,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "04",
+      "item_designation": "M4A4 | Howl",
+      "max_diff": "$88.61",
+      "expected_today_sales": 123,
+      "recommended_buy": 62,
+      "expected_income": "$5494",
+      "details": {
+        "current_price": 160.27154,
+        "predicted_avg_price": 50.37406411743164,
+        "price_trend": -109.89747588256834,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "03",
+      "item_designation": "AWP | Dragon Lore",
+      "max_diff": "$81.80",
+      "expected_today_sales": 123,
+      "recommended_buy": 52,
+      "expected_income": "$4253",
+      "details": {
+        "current_price": 147.94296,
+        "predicted_avg_price": 46.49913610839843,
+        "price_trend": -101.44382389160155,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "02",
+      "item_designation": "AK-47 | Redline",
+      "max_diff": "$74.98",
+      "expected_today_sales": 123,
+      "recommended_buy": 52,
+      "expected_income": "$3899",
+      "details": {
+        "current_price": 135.61438,
+        "predicted_avg_price": 42.624208099365234,
+        "price_trend": -92.99017190063476,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    },
+    {
+      "id": "01",
+      "item_designation": "★ Butterfly Knife",
+      "max_diff": "$68.16",
+      "expected_today_sales": 123,
+      "recommended_buy": 52,
+      "expected_income": "$3545",
+      "details": {
+        "current_price": 123.2858,
+        "predicted_avg_price": 38.74928009033203,
+        "price_trend": -84.53651990966796,
+        "prediction_confidence": "Low",
+        "data_points": 100,
+        "time_range": {
+          "earliest": "2025-07-26 04:33:57",
+          "latest": "2025-07-27 05:18:57"
+        }
+      }
+    }
+  ]
+}
