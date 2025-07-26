@@ -109,24 +109,13 @@ class PredictionFormatter:
                 # 生成饰品名称
                 item_name = self._get_item_names()[i]
                 
-                # 格式化结果
+                # 格式化结果 - 简化版DTO
                 formatted_result = {
                     "id": f"{self.item_counter:02d}",
                     "item_designation": item_name,
-                    "max_diff": f"${max_diff:.2f}",
                     "expected_today_sales": int(expected_sales),
                     "recommended_buy": int(max(recommended_buy, 1)),  # 至少推荐1个
-                    "expected_income": f"${expected_income:.0f}",
                     "expected_income_value": expected_income,  # 用于排序的数值
-                    # 额外的详细信息
-                    "details": {
-                        "current_price": current_price * variation_factor,
-                        "predicted_avg_price": predicted_avg * variation_factor,
-                        "price_trend": price_trend,
-                        "prediction_confidence": self._calculate_confidence(mse * (1 + i * 0.1)),
-                        "data_points": data_summary.get('count', 0),
-                        "time_range": data_summary.get('time_range', {})
-                    }
                 }
                 
                 formatted_results.append(formatted_result)

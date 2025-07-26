@@ -173,30 +173,13 @@ def display_frontend_data(formatted_data):
     print(f"📊 总物品数: {formatted_data.get('total_items', 0)}")
     print()
     
-    # 表格头部
-    print(f"{'ID':<4} {'ITEM DESIGNATION':<25} {'MAX DIFF':<12} {'EXPECTED TODAY SALES':<20} {'RECOMMENDED BUY':<15} {'EXPECTED INCOME':<15}")
-    print("-" * 100)
+    # 表格头部 - 简化版
+    print(f"{'ID':<4} {'ITEM DESIGNATION':<30} {'EXPECTED TODAY SALES':<20} {'RECOMMENDED BUY':<15}")
+    print("-" * 70)
     
     # 显示每个物品
     for item in formatted_data['items']:
-        print(f"{item['id']:<4} {item['item_designation']:<25} {item['max_diff']:<12} {item['expected_today_sales']:<20} {item['recommended_buy']:<15} {item['expected_income']:<15}")
-    
-    print("\n" + "=" * 80)
-    print("📊 详细信息")
-    print("=" * 80)
-    
-    for item in formatted_data['items']:
-        details = item.get('details', {})
-        print(f"\n🎯 {item['item_designation']} (ID: {item['id']})")
-        print(f"   当前价格: ${details.get('current_price', 0):.2f}")
-        print(f"   预测平均价格: ${details.get('predicted_avg_price', 0):.2f}")
-        print(f"   价格趋势: ${details.get('price_trend', 0):.2f}")
-        print(f"   预测置信度: {details.get('prediction_confidence', 'Unknown')}")
-        print(f"   数据点数量: {details.get('data_points', 0)}")
-        
-        time_range = details.get('time_range', {})
-        if time_range:
-            print(f"   时间范围: {time_range.get('earliest', 'N/A')} ~ {time_range.get('latest', 'N/A')}")
+        print(f"{item['id']:<4} {item['item_designation']:<30} {item['expected_today_sales']:<20} {item['recommended_buy']:<15}")
 
 def save_test_results(prediction_data, formatted_data):
     """保存测试结果"""
