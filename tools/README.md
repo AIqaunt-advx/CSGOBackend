@@ -61,9 +61,9 @@ python tools/llm_test_cli.py -q
 - `--format, -f`: 输出格式 (json/pretty)
 - `--quiet, -q`: 静默模式
 
-### 3. `llm_request_tool.py`
+### 3. `predict_tool.py`
 
-LLM请求工具，用于直接向LLM服务发送请求。
+价格预测工具，用于向预测API发送数据进行价格预测。
 
 ## 数据格式
 
@@ -164,7 +164,7 @@ python tools/llm_data_retriever.py
 ### 4. LLM分析（需要配置LLM服务）
 
 ```bash
-python tools/llm_request_tool.py -a trend
+python tools/predict_tool.py
 ```
 
 ## 注意事项

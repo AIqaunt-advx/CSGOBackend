@@ -58,30 +58,33 @@ class QuickDataRetriever:
                 "surviveNum": 1
             }
 
+            # 默认只获取7小时内的数据
+            now = datetime.now()
+            hours_ago = now - timedelta(hours=hours)
+            time_filter = {
+                "timestamp": {
+                    "$gte": int(hours_ago.timestamp()),
+                    "$lte": int(now.timestamp())
+                }
+            }
+
             if method == "sample":
-                # 随机样本
+                # 随机样本（7小时内）
                 pipeline = [
+                    {"$match": time_filter},
                     {"$sample": {"size": limit}},
                     {"$project": projection}
                 ]
                 return list(self.records_collection.aggregate(pipeline))
 
             elif method == "latest":
-                # 最新数据
-                return list(self.records_collection.find({}, projection)
+                # 最新数据（7小时内）
+                return list(self.records_collection.find(time_filter, projection)
                             .sort("timestamp", -1).limit(limit))
 
             elif method == "hours":
                 # 最近N小时
-                now = datetime.now()
-                hours_ago = now - timedelta(hours=hours)
-                query = {
-                    "timestamp": {
-                        "$gte": int(hours_ago.timestamp()),
-                        "$lte": int(now.timestamp())
-                    }
-                }
-                return list(self.records_collection.find(query, projection)
+                return list(self.records_collection.find(time_filter, projection)
                             .sort("timestamp", -1).limit(limit))
 
             elif method == "price":

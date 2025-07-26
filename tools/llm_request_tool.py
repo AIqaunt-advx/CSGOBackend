@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LLM请求工具 - 获取数据并发送到LLM服务进行分析"""
+"""预测请求工具 - 获取数据并发送到预测API进行分析"""
 
 import argparse
 import json
@@ -21,15 +21,11 @@ except ImportError as e:
     sys.exit(1)
 
 
-class LLMRequestTool:
+class PredictRequestTool:
     def __init__(self):
-        """初始化LLM请求工具"""
-        self.base_url = settings.LLM_API_BASE_URL
-        self.api_key = settings.LLM_API_KEY
-        self.model = settings.LLM_MODEL
-        self.max_tokens = settings.LLM_MAX_TOKENS
-        self.temperature = settings.LLM_TEMPERATURE
-        self.timeout = settings.LLM_REQUEST_TIMEOUT
+        """初始化预测请求工具"""
+        self.predict_url = settings.PREDICT_API_URL
+        self.timeout = 30
 
     def create_analysis_prompt(self, data: dict, analysis_type: str = "trend") -> str:
         """创建分析提示词"""
@@ -100,7 +96,8 @@ class LLMRequestTool:
             avg_qty=stats.get("avg_quantity", 0),
             time_earliest=time_range.get("earliest", "未知"),
             time_latest=time_range.get("latest", "未知"),
-            data_json=json.dumps(data["data"][:10], indent=2, ensure_ascii=False)  # 只显示前10条
+            data_json=json.dumps(
+                data["data"][:10], indent=2, ensure_ascii=False)  # 只显示前10条
         )
 
     def send_request(self, prompt: str) -> dict:

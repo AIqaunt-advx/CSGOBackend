@@ -102,6 +102,32 @@ async def health_check():
         }
 
 
+@app.post("/predict")
+async def predict_price_simple(request: dict):
+    """简化的价格预测端点"""
+    from modules.models import PredictionRequest
+    from modules.prediction import PricePredictor
+    
+    try:
+        # 验证请求数据
+        prediction_request = PredictionRequest(**request)
+        
+        # 创建预测器并进行预测
+        predictor = PricePredictor()
+        result = predictor.predict_prices(prediction_request.data)
+        
+        return result.model_dump()
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "predictions": [],
+            "mse": 0.0,
+            "confidence": 0.0,
+            "trend": "unknown"
+        }
+
+
 if __name__ == "__main__":
     import uvicorn
 

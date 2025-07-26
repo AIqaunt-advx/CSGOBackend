@@ -178,7 +178,7 @@ uv run cli.py tools interactive
 ├── tools/
 │   ├── llm_test_cli.py        # CLI数据工具
 │   ├── llm_data_retriever.py  # 交互式数据工具
-│   └── llm_request_tool.py    # LLM请求工具
+│   └── predict_tool.py       # 价格预测工具
 ├── __test__/                   # 测试文件
 │   ├── crawler/               # 爬虫测试
 │   ├── tools/                 # 工具测试

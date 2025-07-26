@@ -18,6 +18,7 @@ from pymongo import MongoClient
 from tqdm import trange
 
 from config import settings
+from modules.models import TrendDetailsDataItem
 
 logger = logging.getLogger(__name__)
 
@@ -117,32 +118,7 @@ class MarketPageResponse(BaseModel):
     errorCodeStr: str | None
 
 
-class TrendDetailsDataItem(BaseModel):
-    """趋势详情数据项 - 对应你要的数据格式"""
-    timestamp: int
-    price: float
-    onSaleQuantity: int
-    seekPrice: float
-    seekQuantity: int
-    transactionAmount: float | None
-    transactionNum: int | None
-    surviveNum: int | None
 
-    @model_validator(mode="before")
-    def parse_trend_details_list(self, v):
-        if isinstance(v, list):
-            assert len(v) == 8, "Invalid trend details list"
-            return {
-                "timestamp": int(v[0]),
-                "price": float(v[1]),
-                "onSaleQuantity": int(v[2]),
-                "seekPrice": float(v[3]),
-                "seekQuantity": int(v[4]),
-                "transactionAmount": float(v[5]) if v[5] is not None else None,
-                "transactionNum": int(v[6]) if v[6] is not None else None,
-                "surviveNum": int(v[7]) if v[7] is not None else None,
-            }
-        return v
 
 
 class TypeTrendDetailsResponse(BaseModel):
@@ -259,8 +235,8 @@ class CSGOCrawler:
         next_id = None
 
         try:
-            # 限制爬取页数，避免无限循环
-            for page in trange(64, desc="爬取市场数据"):
+            # 限制爬取页数，避免无限循环和过度请求
+            for page in trange(10, desc="爬取市场数据"):
                 skin_data = await fetch_skin_market_data(next_id=next_id)
 
                 if skin_data is None:
@@ -295,8 +271,8 @@ class CSGOCrawler:
         all_details = []
 
         try:
-            # 分组处理，每组20个物品
-            grouped = [items[i:i + 20] for i in range(0, len(items), 20)]
+            # 分组处理，每组5个物品，减少并发压力
+            grouped = [items[i:i + 5] for i in range(0, len(items), 5)]
 
             for group_idx, group in tqdm.tqdm(enumerate(grouped)):
                 logger.info(f"处理第 {group_idx + 1}/{len(grouped)} 组物品")
@@ -321,9 +297,9 @@ class CSGOCrawler:
                     else:
                         logger.warning(f"物品 {item['name']} 详情数据为空或请求失败: {result['errorMsg']}")
 
-                # 组间延迟
+                # 组间延迟，避免请求过快
                 if group_idx < len(grouped) - 1:
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(8)  # 增加到8秒延迟
 
         except Exception as e:
             logger.error(f"爬取物品详情数据失败: {e}")

@@ -3,33 +3,10 @@ from typing import List
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+
+from modules.models import TrendDetailsDataItem, PredictionRequest, PredictionResponse
 
 prediction_router = APIRouter()
-
-
-class TrendDetailsDataItem(BaseModel):
-    """趋势数据项模型"""
-    timestamp: int
-    price: float
-    onSaleQuantity: int
-    seekPrice: float
-    seekQuantity: int
-    transactionAmount: float
-    transcationNum: int
-    surviveNum: int
-
-
-class PredictionRequest(BaseModel):
-    """预测请求模型"""
-    data: List[TrendDetailsDataItem]
-
-
-class PredictionResponse(BaseModel):
-    """预测响应模型"""
-    predictions: List[float]
-    mse: float
-    confidence: float
 
 
 class PricePredictor:
@@ -102,11 +79,24 @@ class PricePredictor:
 
             # 计算MSE（这里使用模拟值）
             mse = price_volatility if len(prices) > 1 else 0.0
+            
+            # 分析趋势
+            if len(prices) >= 2:
+                recent_change = prices[-1] - prices[0]
+                if recent_change > avg_price * 0.05:  # 上涨超过5%
+                    trend = "up"
+                elif recent_change < -avg_price * 0.05:  # 下跌超过5%
+                    trend = "down"
+                else:
+                    trend = "stable"
+            else:
+                trend = "stable"
 
             return PredictionResponse(
                 predictions=predictions,
                 mse=mse,
-                confidence=round(confidence, 3)
+                confidence=round(confidence, 3),
+                trend=trend
             )
 
         except Exception as e:

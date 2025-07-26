@@ -119,7 +119,7 @@ def main():
         print("\n💡 使用建议:")
         print("- 交互式使用: python tools/llm_data_retriever.py")
         print("- 命令行使用: python tools/llm_test_cli.py --help")
-        print("- LLM分析: python tools/llm_request_tool.py --help")
+        print("- 价格预测: python tools/predict_tool.py --help")
     else:
         print("⚠️ 部分测试失败，请检查配置和数据库连接")
         sys.exit(1)
