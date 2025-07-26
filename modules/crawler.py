@@ -15,7 +15,6 @@ import tenacity
 import tqdm
 from pydantic import BaseModel, model_validator
 from pymongo import MongoClient
-from tqdm import trange
 
 from config import settings
 from modules.models import TrendDetailsDataItem
@@ -229,31 +228,23 @@ class CSGOCrawler:
         """爬取市场物品列表"""
         logger.info("开始爬取市场物品数据...")
         full_list: List[MarketItem] = []
-        next_id = None
 
         try:
-            # 限制爬取页数，避免无限循环和过度请求
-            for page in trange(10, desc="爬取市场数据"):
-                skin_data = await fetch_skin_market_data(next_id=next_id)
+            # 一次性获取所有数据，pageSize设为8000足够获取全部物品
+            logger.info("执行单次API调用获取所有市场数据")
+            skin_data = await fetch_skin_market_data(next_id=None)
 
-                if skin_data is None:
-                    logger.warning(f"第{page + 1}页API调用失败，跳过此页")
-                    continue
+            if skin_data is None:
+                logger.error("API调用失败")
+                return full_list
 
-                data = skin_data['data']
-                if data is None:
-                    logger.warning(f"第{page + 1}页数据为空: {skin_data}")
-                    break
+            data = skin_data['data']
+            if data is None:
+                logger.warning(f"数据为空: {skin_data}")
+                return full_list
 
-                full_list += data['list']
-                next_id = data['nextId']
-
-                if next_id is None:
-                    logger.info(f"已爬取完所有页面，共{page + 1}页")
-                    break
-
-                # 添加延迟避免请求过快
-                await asyncio.sleep(settings.CRAWLER_DELAY_BETWEEN_REQUESTS)
+            full_list = data['list']
+            logger.info(f"成功获取 {len(full_list)} 个市场物品")
 
         except Exception as e:
             logger.error(f"爬取市场物品数据失败: {e}")
@@ -268,8 +259,9 @@ class CSGOCrawler:
         all_details = []
 
         try:
-            # 分组处理，每组5个物品，减少并发压力
-            grouped = [items[i:i + 5] for i in range(0, len(items), 5)]
+            # 分组处理，使用配置的批处理大小，减少并发压力
+            batch_size = settings.CRAWLER_BATCH_SIZE
+            grouped = [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
 
             for group_idx, group in tqdm.tqdm(enumerate(grouped)):
                 logger.info(f"处理第 {group_idx + 1}/{len(grouped)} 组物品")
@@ -296,7 +288,7 @@ class CSGOCrawler:
 
                 # 组间延迟，避免请求过快
                 if group_idx < len(grouped) - 1:
-                    await asyncio.sleep(8)  # 增加到8秒延迟
+                    await asyncio.sleep(settings.CRAWLER_DELAY_BETWEEN_REQUESTS)
 
         except Exception as e:
             logger.error(f"爬取物品详情数据失败: {e}")
@@ -305,44 +297,47 @@ class CSGOCrawler:
         logger.info(f"成功爬取 {len(all_details)} 条详情数据")
         return all_details
 
-    def save_to_database(self, details: List[Dict[str, Any]]) -> bool:
-        """保存数据到数据库"""
-        if not details:
+    def save_market_data(self, market_data: List[Dict[str, Any]]) -> bool:
+        """保存市场数据到数据库"""
+        if not market_data:
             logger.info("没有数据需要保存")
             return True
 
         try:
             # 生成文件ID
-            file_id = f"crawl_{int(time.time())}"
+            file_id = f"market_crawl_{int(time.time())}"
+            current_time = datetime.now()
 
             # 保存主文档
             main_doc = {
                 'file_id': file_id,
+                'crawl_type': 'market_data',
                 'success': True,
                 'error_code': 0,
                 'error_msg': None,
-                'error_data': None,
-                'error_code_str': None,
-                'record_count': len(details),
-                'created_at': datetime.now()
+                'record_count': len(market_data),
+                'created_at': current_time,
+                'crawl_timestamp': int(time.time())
             }
 
             main_result = self.collection.insert_one(main_doc)
             logger.info(f"主文档保存成功，ID: {main_result.inserted_id}")
 
-            # 为每条记录添加file_id
-            for detail in details:
-                detail['file_id'] = file_id
+            # 为每条记录添加元数据
+            for item in market_data:
+                item['file_id'] = file_id
+                item['crawl_timestamp'] = int(time.time())
+                item['created_at'] = current_time
 
-            # 批量插入详情记录
-            if details:
-                records_result = self.records_collection.insert_many(details)
-                logger.info(f"成功保存 {len(records_result.inserted_ids)} 条详情记录")
+            # 批量插入市场数据记录
+            if market_data:
+                records_result = self.records_collection.insert_many(market_data)
+                logger.info(f"成功保存 {len(records_result.inserted_ids)} 条市场数据记录")
 
             return True
 
         except Exception as e:
-            logger.error(f"保存数据到数据库失败: {e}")
+            logger.error(f"保存市场数据到数据库失败: {e}")
             return False
 
     async def run_single_crawl(self):
@@ -354,21 +349,24 @@ class CSGOCrawler:
             # 连接数据库
             self.connect_db()
 
-            # 1. 爬取市场物品列表
+            # 1. 爬取市场物品列表（一次性获取所有数据）
             market_items = await self.crawl_market_items()
             if not market_items:
-                logger.warning("没有获取到市场物品数据，可能是API问题，生成模拟数据")
-                # 生成模拟数据以保持爬虫运行
-                item_details = self._generate_mock_data()
-            else:
-                # 2. 爬取物品详情
-                item_details = await self.crawl_item_details(market_items)
-                if not item_details:
-                    logger.warning("没有获取到物品详情数据，可能是API问题，生成模拟数据")
-                    item_details = self._generate_mock_data()
+                logger.warning("没有获取到市场物品数据，可能是API问题")
+                return False
+
+            # 2. 直接保存市场数据到数据库（不再爬取详情）
+            # 将MarketItem转换为字典格式以便存储
+            market_data = []
+            for item in market_items:
+                if isinstance(item, dict):
+                    market_data.append(item)
+                else:
+                    # 如果是Pydantic模型，转换为字典
+                    market_data.append(item.model_dump() if hasattr(item, 'model_dump') else dict(item))
 
             # 3. 保存到数据库
-            success = self.save_to_database(item_details)
+            success = self.save_market_data(market_data)
 
             elapsed_time = time.time() - start_time
             logger.info(f"爬取任务完成，耗时 {elapsed_time:.2f} 秒")
@@ -411,6 +409,7 @@ class CSGOCrawler:
 
 # 创建全局爬虫实例
 csgo_crawler = CSGOCrawler()
+crawler_manager = csgo_crawler  # 为了兼容main.py的导入
 
 
 # 主函数和测试代码

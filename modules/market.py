@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from config import settings
+from modules.database import db_manager
 
 market_router = APIRouter()
 
@@ -135,6 +136,29 @@ async def compare_prices(item_name: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@market_router.get("/data")
+async def get_market_data(limit: int = 100, skip: int = 0):
+    """
+    获取数据库中的市场数据DTO
+    
+    - **limit**: 返回数据条数限制 (默认100)
+    - **skip**: 跳过的数据条数 (默认0)
+    """
+    try:
+        data = await db_manager.get_market_data(limit=limit, skip=skip)
+
+        return {
+            "status": "success",
+            "data": data,
+            "count": len(data),
+            "limit": limit,
+            "skip": skip
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取市场数据失败: {str(e)}")
 
 
 @market_router.get("/trending")
