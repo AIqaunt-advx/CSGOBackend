@@ -4,3 +4,5 @@ requests
 pytest
 pytest-asyncio
 httpx
+pydantic-settings
+numpy
