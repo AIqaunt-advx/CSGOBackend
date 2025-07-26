@@ -1,5 +1,8 @@
 from fastapi import FastAPI
+
 import requests
+import time
+import datetime
 
 
 app = FastAPI()
@@ -9,7 +12,7 @@ def main():
     return {"status": "ok", "message": "Welcome to the DaoGO Backend!"}
 
 
-@app.post("/api/max_diff") # 不同平台的差价
+@app.post("/api/frontend/max_diff") # 不同平台的差价
 async def max_diff():
     """
     直接去拿上游域名的饰品信息
@@ -140,6 +143,27 @@ async def max_diff():
         return {"error": "Network error", "details": str(e)}
     except Exception as e:
         return {"error": "Internal server error", "details": str(e)}
+
+
+
+@app.patch("/api/developer/ItemDetail")
+async def item_detail():
+    """
+    利用现有的市场情况，发送给AI Agent分析
+    分析完毕后交给 /api/frontend/recommendation
+    """
+
+    timestamp = datetime.datetime.strptime(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), "%Y-%m-%d %H:%M:%S")
+
+
+
+@app.post("/api/frontend/recommendation")
+async def recommendation(data: dict):
+    """
+    AI Agent分析完毕，推送给前端
+    """
+    ...
+
 
 if __name__ == "__main__":
     import uvicorn
