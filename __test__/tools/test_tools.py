@@ -3,7 +3,9 @@
 
 import sys
 import os
-sys.path.append('tools')
+
+# 添加项目根目录到路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from tools.llm_test_cli import QuickDataRetriever, format_for_llm
 import json
